@@ -32,13 +32,14 @@ sub new{
   return $self;
 }
 
-sub add_filtered_evidence {
-    my ($self, $gene, $rejected_gene) = @_;
-
-    warning("You need to implement a method add_filtered_evidence!\nNO FILTERING will be done!");
+sub has_overlap {
+    throw("You need to implement a method has_overlap!");
 }
 
-#####################################
+sub add_supporting_evidence {
+    my ($gene, $discarded_gene) = @_;
+}
+
 sub filter {
   my ($self, $these, $others) = @_;
 
@@ -52,45 +53,25 @@ sub filter {
   foreach my $obj (@$these) {
     my (@genomic_overlap, $left_bound);
 
-
+    my $overlap = 0;
     for(my $i=$cur_idx; $i < @$others; $i++) {
-      my $o_obj = $others->[$i];
+        my $o_obj = $others->[$i];
 
-      next if $o_obj->strand != $obj->strand;
-      if ($o_obj->end >= $obj->start and not defined $left_bound) {
-        $left_bound = $i;
-      }
-
-      if ($o_obj->end < $obj->start) {
-        next;
-      } elsif ($o_obj->start > $obj->end) {
-        last;
-      } else {
-          has_overlap($obj, $o_obj);
-        push @genomic_overlap, $o_obj;
-      }
+        if ($o_obj->strand != $obj->strand or $o_obj->end < $obj->start) {
+            next;
+        } else {
+            $left_bound = $i;
+            if ($o_obj->start > $obj->end) {
+                last;
+            } else {
+                $overlap = $self->has_overlap($obj, $o_obj);
+            }
+        }
     }
 
     $cur_idx = $left_bound if defined $left_bound;
 
-    my $exon_overlap = 0;
-    if (@genomic_overlap) {
-      my @exons = @{$obj->get_all_Transcripts->[0]->get_all_translateable_Exons};
-      OG: foreach my $o_obj (@genomic_overlap) {
-        foreach my $oe (@{$o_obj->get_all_Transcripts->[0]->get_all_translateable_Exons}) {
-          foreach my $e (@exons) {
-            if ($oe->strand == $e->strand and
-                $oe->end >= $e->start and
-                $oe->start <= $e->end) {
-              $exon_overlap = 1;
-              last OG;
-            }
-          }
-        }
-      }
-    }
-
-    if (not $exon_overlap) {
+    if (not $overlap) {
       push @filtered, $obj;
     }
   }

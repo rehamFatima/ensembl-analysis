@@ -16,45 +16,16 @@ package Bio::EnsEMBL::Analysis::Tools::LayerFilter::GenomeOverlapFilter;
 
 use strict;
 use warnings;
+use vars qw(@ISA);
 
 use Bio::EnsEMBL::Utils::Exception qw(verbose throw warning);
 use Bio::EnsEMBL::Utils::Argument qw( rearrange );
 use Bio::EnsEMBL::Analysis::Tools::LayerFilter::AbstractLayerFilter;
 
+@ISA = ('Bio::EnsEMBL::Analysis::Tools::LayerFilter::AbstractLayerFilter');
 
-
-#####################################
-sub filter {
-  my ($self, $these, $others) = @_;
-
-  # interference is judged by overlap at genomic level
-  # assumption is that @others is sorted by gene start
-
-  my @filtered;
-
-  foreach my $obj (@$these) {
-    my ($left_bound, $genomic_overlap);
-
-    for(my $i=0; $i < @$others && !$genomic_overlap; $i++) {
-      my $o_obj = $others->[$i];
-
-      next if $o_obj->strand != $obj->strand;
-
-      if ($o_obj->end < $obj->start) {
-        next;
-      } elsif ($o_obj->start > $obj->end) {
-        last;
-      } else {
-        $genomic_overlap = 1;
-      }
-    }
-
-    if (not $genomic_overlap) {
-      push @filtered, $obj;
-    }
-  }
-
-  return \@filtered;
+sub has_overlap {
+    return 1;
 }
 
 1;

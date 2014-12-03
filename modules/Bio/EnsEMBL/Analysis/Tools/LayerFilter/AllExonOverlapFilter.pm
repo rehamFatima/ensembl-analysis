@@ -11,72 +11,31 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 package Bio::EnsEMBL::Analysis::Tools::LayerFilter::AllExonOverlapFilter;
 
 use strict;
 use warnings;
+use vars qw(@ISA);
 
 use Bio::EnsEMBL::Utils::Exception qw(verbose throw warning);
 use Bio::EnsEMBL::Utils::Argument qw( rearrange );
 use Bio::EnsEMBL::Analysis::Tools::LayerFilter::AbstractLayerFilter;
 
+@ISA = ('Bio::EnsEMBL::Analysis::Tools::LayerFilter::AbstractLayerFilter');
 
+sub has_overlap {
+    my ($self, $upper_layer_gene, $lower_layer_gene, $add_supporting_evidence) = @_;
 
-#####################################
-sub filter {
-  my ($self, $these, $others) = @_;
-
-  # interference is judged by overlap at exon level
-  # assumption is that @others is sorted by gene start
-
-  my @filtered;
-
-  my $cur_idx = 0;
-
-  foreach my $obj (@$these) {
-    my (@genomic_overlap, $left_bound);
-
-
-    for(my $i=$cur_idx; $i < @$others; $i++) {
-      my $o_obj = $others->[$i];
-
-      if ($o_obj->end >= $obj->start and not defined $left_bound) {
-        $left_bound = $i;
-      }
-
-      if ($o_obj->end < $obj->start) {
-        next;
-      } elsif ($o_obj->start > $obj->end) {
-        last;
-      } else {
-        push @genomic_overlap, $o_obj;
-      }
-    }
-
-    $cur_idx = $left_bound if defined $left_bound;
-
-    my $exon_overlap = 0;
-    if (@genomic_overlap) {
-      my @exons = @{$obj->get_all_Exons};
-      OG: foreach my $o_obj (@genomic_overlap) {
-        foreach my $oe (@{$o_obj->get_all_Exons}) {
-          foreach my $e (@exons) {
-            if ($oe->strand == $e->strand and
-                $oe->end >= $e->start and
-                $oe->start <= $e->end) {
-              $exon_overlap = 1;
-              last OG;
+    my @exons = @{$upper_layer_gene->get_all_Exons};
+    foreach my $oe (@{$lower_layer_gene->get_all_Exons}) {
+        foreach my $e (@exons) {
+            if ( $oe->end >= $e->start and $oe->start <= $e->end) {
+                return 1;
             }
-          }
         }
-      }
     }
-
-    if (not $exon_overlap) {
-      push @filtered, $obj;
-    }
-  }
-
-  return \@filtered;
+    return 0;
 }
+
 1;
