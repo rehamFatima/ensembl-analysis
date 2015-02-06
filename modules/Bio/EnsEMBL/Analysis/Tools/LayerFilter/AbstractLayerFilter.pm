@@ -36,8 +36,19 @@ sub has_overlap {
     throw("You need to implement a method has_overlap!");
 }
 
-sub add_supporting_evidence {
-    my ($gene, $discarded_gene) = @_;
+sub is_not_equal {
+    my ($objects, $discarded_objects) = @_;
+
+    # If the number of objects differs, they are not equal
+    return 1 if (scalar(@$objects) != scalar(@$discarded_objects));
+    my @sorted_objects = sort {$a->seq_region_start <=> $b->seq_region_start} @$objects;
+    my @sorted_disc_objects = sort {$a->seq_region_start <=> $b->seq_region_start} @$discarded_objects;
+    for (my $i = 0; $i < @sorted_objects; $i++) {
+    # If the boundaries for one object differs, they are not equal
+        return 1 if ($sorted_objects[$i]->seq_region_start != $sorted_disc_objects[$i]->seq_region_start or
+                     $sorted_objects[$i]->seq_region_end != $sorted_disc_objects[$i]->seq_region_end);
+    }
+    return 0;
 }
 
 sub filter {

@@ -27,11 +27,11 @@ use Bio::EnsEMBL::Analysis::Tools::LayerFilter::AbstractLayerFilter;
 sub has_overlap {
     my ($self, $upper_layer_gene, $lower_layer_gene, $add_supporting_evidence) = @_;
 
-    my @exons = @{$upper_layer_gene->get_all_Exons};
+    my $exons = $upper_layer_gene->get_all_Exons;
     foreach my $oe (@{$lower_layer_gene->get_all_Exons}) {
-        foreach my $e (@exons) {
+        foreach my $e (@$exons) {
             if ( $oe->end >= $e->start and $oe->start <= $e->end) {
-                return 1;
+                return $self->is_not_equal($exons, $lower_layer_gene->get_all_Exons);
             }
         }
     }
