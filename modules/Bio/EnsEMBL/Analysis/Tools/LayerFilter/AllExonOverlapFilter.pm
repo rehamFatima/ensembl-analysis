@@ -1,4 +1,4 @@
-# Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,6 +12,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+=head1 NAME
+
+Bio::EnsEMBL::Analysis::Tools::LayerFilter::AllExonOverlapFilter
+
+=head1 DESCRIPTION
+
+This module low quality gene models against higher quality genes models based on all their
+exons.
+At the moment CodingExonOverlapFilter is the prefered filter.
+
+To create a new filter module, you need to
+ - inherit from this module: Bio::EnsEMBL::Analysis::Tools::LayerFilter::AbstractLayerFilter
+ - implement has_overlap which will define the filtering.
+
+Previously the filter was rejecting all models overlapping higher layer models.
+Now we accept the models from lower layer overlapping higher layer models when the exons
+boundaries are the same.
+
+=head1 CONTACT
+
+Post questions to the Ensembl development list: http://lists.ensembl.org/mailman/listinfo/dev
+
+=cut
+
 package Bio::EnsEMBL::Analysis::Tools::LayerFilter::AllExonOverlapFilter;
 
 use strict;
@@ -23,6 +47,21 @@ use Bio::EnsEMBL::Utils::Argument qw( rearrange );
 use Bio::EnsEMBL::Analysis::Tools::LayerFilter::AbstractLayerFilter;
 
 @ISA = ('Bio::EnsEMBL::Analysis::Tools::LayerFilter::AbstractLayerFilter');
+
+=head2 has_overlap
+
+ Arg [1]    : $upper, object to filtered against
+ Arg [1]    : $lower, object to be filtered
+ Example    : $self->has_overlap($upper, $lower);
+ Description: Filtering on exon overlap. All models from a lower level which has at least one exon overlapping
+              an exon from a higher layer model will be discarded unless it is similar to the higher model
+              (same coding exon boundaries).
+ Returntype : Integer, 1 when the model overlaps the other. 0 if the model does not overlap. Any other value
+              for a model that overlaps but has to be kept
+ Exceptions : None
+
+
+=cut
 
 sub has_overlap {
     my ($self, $upper_layer_gene, $lower_layer_gene, $add_supporting_evidence) = @_;
